@@ -1,23 +1,44 @@
-import { Text, SafeAreaView, StyleSheet,View } from 'react-native';
-import React from 'react';
-import {WebView} from 'react-native-webview';
-
-
-// You can import supported modules from npm
-import { Card } from 'react-native-paper';
-
-// or any files within the Snack
-import AssetExample from './components/AssetExample';
+import { Text, StyleSheet, View, BackHandler,Alert } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { WebView } from 'react-native-webview';
 
 export default function App() {
+  const webViewRef = useRef(null);
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (canGoBack && webViewRef.current) {
+        webViewRef.current.goBack();
+        return true;
+      }
+      else{
+        Alert.alert('Exit App','Are you sure you want to exit the app?',[
+          {text:"cancel",onPress:()=>{},style:'cancel'},
+          {text:"Exit",onPress:()=>BackHandler.exitApp()},
+        ],{cancelable:true})
+      }
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [canGoBack]);
+
+  const handleNavigationStateChange = (navState) => {
+    setCanGoBack(navState.canGoBack);
+  };
+
   return (
     <View style={styles.container}>
-  
       <WebView 
-      source={{uri:'metamerchandice.com'}}
-      style={styles.WebView}
-      startInLoadingState={true}
-       />
+        ref={webViewRef}
+        source={{uri: 'https://metamerchandice.com'}}
+        style={styles.WebView}
+        startInLoadingState={true}
+        onNavigationStateChange={handleNavigationStateChange}
+         allowsBackForwardNavigationGestures
+      />
     </View>
   );
 }
@@ -28,6 +49,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#ecf0f1',
     padding: 8,
+  },
+  WebView: {
+    flex: 1,
   },
   paragraph: {
     margin: 24,
